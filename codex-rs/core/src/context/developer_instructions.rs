@@ -12,11 +12,15 @@ impl DeveloperInstructions {
             instructions: instructions.into(),
         }
     }
+
+    pub(crate) fn content_kind() -> ContentItemKind {
+        ContentItemKind("generic.developer_instructions".to_string())
+    }
 }
 
 impl ContextualUserFragment for DeveloperInstructions {
     fn content_kind(&self) -> ContentItemKind {
-        ContentItemKind("generic.developer_instructions".to_string())
+        Self::content_kind()
     }
 
     fn role(&self) -> &'static str {

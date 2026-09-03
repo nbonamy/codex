@@ -3949,9 +3949,10 @@ impl Session {
         };
         let separate_guardian_developer_message =
             crate::guardian::is_basic_session_source(&session_source);
-        // Keep the guardian policy prompt out of the aggregated developer bundle so it
-        // stays isolated as its own top-level developer message for guardian subagents.
+        // Non-root sessions have their own inherited-history handling. Keep their existing
+        // initial-context behavior separate from the root-session world-state section.
         if !separate_guardian_developer_message
+            && turn_context.session_source.is_non_root_agent()
             && let Some(developer_instructions) = turn_context.developer_instructions.as_deref()
             && !developer_instructions.is_empty()
         {
@@ -4081,6 +4082,7 @@ impl Session {
         // Render the active mode after the usage hint so it can override that hint.
         let mut initial_multi_agent_mode = None;
         let mut managed_developer_instructions = None;
+        let mut model_switch_inserted = false;
         for fragment in world_state.render_full() {
             match fragment.role() {
                 "developer"
@@ -4088,6 +4090,7 @@ impl Session {
                 {
                     // New-model instructions must precede the rest of the developer context.
                     developer_sections.insert(0, fragment.render_fragment());
+                    model_switch_inserted = true;
                 }
                 "developer" if fragment.markers().0 == MULTI_AGENT_MODE_OPEN_TAG => {
                     initial_multi_agent_mode = Some(fragment);
@@ -4101,6 +4104,12 @@ impl Session {
                     if fragment.markers().0 == MultiAgentRoleInstructions::type_markers().0 =>
                 {
                     separate_developer_sections.push(fragment.render_fragment());
+                }
+                "developer" if fragment.content_kind() == DeveloperInstructions::content_kind() => {
+                    developer_sections.insert(
+                        usize::from(model_switch_inserted),
+                        fragment.render_fragment(),
+                    );
                 }
                 "developer"
                     if fragment.requires_separate_message() && fragment.markers().0.is_empty() =>

@@ -10,6 +10,7 @@ use crate::context::world_state::AppsInstructionsState;
 use crate::context::world_state::CollaborationModeState;
 use crate::context::world_state::CompactPermissionsState;
 use crate::context::world_state::ContextWindowGuidanceState;
+use crate::context::world_state::DeveloperInstructionsState;
 use crate::context::world_state::EnvironmentsInstructionsState;
 use crate::context::world_state::EnvironmentsState;
 use crate::context::world_state::ManagedDeveloperInstructionsState;
@@ -88,6 +89,13 @@ impl Session {
             String::new()
         };
         let mut world_state = WorldState::default();
+        if !turn_context.session_source.is_non_root_agent()
+            && !crate::guardian::is_basic_session_source(&turn_context.session_source)
+        {
+            world_state.add_section(DeveloperInstructionsState::new(
+                turn_context.developer_instructions.as_deref(),
+            )?);
+        }
         world_state.add_section(ModelInstructionsState::new(
             &turn_context.model_info().slug,
             previous_model.as_deref(),

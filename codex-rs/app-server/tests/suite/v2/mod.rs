@@ -26,6 +26,7 @@ mod curated_mcp_sync;
 mod current_time;
 mod cyber_access_program;
 mod daybreak_access;
+mod developer_instructions;
 mod dynamic_tools;
 mod environment_add;
 mod environment_info;
